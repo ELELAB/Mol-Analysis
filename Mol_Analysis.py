@@ -1,11 +1,19 @@
-#!/usr/bin/env python
-__author__ = "Mads Nygaard"
-__date__ = "20171211"
+#    Copyright (C) 2018 Matteo Lambrughi, Matteo Tiberti, Maria Francesca Allega, Valentina Sora, Mads Nygaard, Agota Toth, Juan Salamanca Viloria, Emmanuelle Bignon, Elena Papaleo <elenap@cancer.dk>, Computaitonal Biology Laboratory, Danish Cancer Society Research Center, 2100, Copenhagen, Denmark
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
 
-# Agota's modifications:
-# I gave more colours so now we have 7 different colours.
-# I changed the legend size.
-# And not the best solution, but I changed the legend "name" so that we can see the beginning of the selection as well.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#!/usr/bin/env python
+__author__ = "Mads Nygaard, Agota Toth"
+__date__ = "20171211"
 
 ### Global dependencies
 import os
@@ -77,7 +85,7 @@ class fnamesclass(dict):
 
 class gTools_runner:
     """Runs gromacs wrapper, keeps track of input/output filenames etc."""
-    def __init__(self, wdir, odir="Mol_An", f=None, tpr=None, ndxfile=None,
+    def __init__(self, wdir, odir="Mol_An", splitlen=[10], f=None, tpr=None, ndxfile=None,
                  outf=None, outs=None, chains=None, center=None,
                  ndxparams=None, dryrun=False, skip=None, verbose=False,
                  dt=None, group=0):
@@ -85,6 +93,7 @@ class gTools_runner:
         # Globally sets verbose mode
         gromacs.environment.flags['capture_output'] = not verbose
         # Store different variables of self
+        self.splitlen = splitlen
         self.dryrun = dryrun
         if not os.path.isdir(wdir):
             raise IOError("Folder:%s is not found" % wdir)
@@ -96,6 +105,10 @@ class gTools_runner:
         # Create output directory if not present
         if not os.path.isdir(realodir):
             os.makedirs(realodir)
+
+        for i in splitlen:
+            if not os.path.isdir(realodir+"/rmsf"+str(i)):
+                os.makedirs(realodir+"/rmsf"+str(i))
 
         if (os.path.isfile(wdir+"/residuetypes.dat")) and \
                 (not os.path.isfile(os.getcwd()+"/residuetypes.dat")):
@@ -177,6 +190,7 @@ class gTools_runner:
         else:
             splits.append((start, (start+newdt)))
             for n in range(start+newdt, stop, newdt):
+#		print self.trjdt
                 splits.append((n+self.trjdt, (n+newdt)))
             return splits
 
@@ -334,7 +348,7 @@ class gTools_runner:
             print "Calculating Rg"
             excode, out, err = g_rg.run()
 
-    def rmsf(self, splitlen=10, **kwargs):
+    def rmsf(self, splitlen, **kwargs):
         """Calcs the rmsf broken into chunks of splitlen(ns) size"""
         #chains = [x for x in self.fnames.get_chains() if "C-alpha" in x]
         chains = self.fnames.get_chains()
@@ -348,13 +362,13 @@ class gTools_runner:
             chain = chain + "_&_C-alpha"
             chain_fname = chain.replace("&", "n")  # Fix for not using & in filename
             for begin, end in splits:
-                outfile = self.odir + "rmsf_%s_%s.xvg" % (chain_fname, end)
-                self._addfilename("rmsf_" + chain_fname, outfile)
+                outfile = self.odir + "rmsf"+str(splitlen) + "/rmsf_%s_%s.xvg" % (chain_fname, end)
+                self._addfilename("rmsf" + str(splitlen) + "_" + chain_fname, outfile)
                 g_rmsf = gromacs.tools.G_rmsf(
                         f=self.outf,
                         s=self.outs,
                         o=outfile,
-                        od=self.odir + "rmsf_od_%s_%s.xvg" % (chain_fname, end),
+                        od=self.odir + "rmsf"+str(splitlen) + "/rmsf_od_%s_%s.xvg" % (chain_fname, end),
                         b=begin,
                         e=end,
                         n=self.ndxfile,
@@ -406,7 +420,8 @@ class gTools_runner:
             self.rg()
 
         if self.torun["rmsf"] is True:
-            self.rmsf()
+            for i in self.splitlen:                
+                self.rmsf(i)
 
         if self.torun["pdbout"] is True:
             self.pdbout(skip=100)
@@ -422,13 +437,14 @@ class gTools_plotter:
             gromacs.fileformats.XVG.plot(self, **kwargs)
             return self.fig.gca()
 
-    def __init__(self, fnames, odir, begin=0, end=None, chains=["Protein"], figsize=(8.27, 11.69)):
+    def __init__(self, fnames, odir, begin=0, end=None, splitlen=[10], chains=["Protein"], figsize=(8.27, 11.69)):
         """Makes the figure etc"""
         from cycler import cycler
         self.fnames = fnames
         self.odir = odir
         self.begin = begin
         self.end = end
+        self.splitlen = splitlen
         self.fig = plt.figure(figsize=figsize)
         plt.rc('axes', prop_cycle=(cycler('color', ['k', 'r', 'g', 'b', 'm', 'y', 'c'])))
         self.axlist = []
@@ -595,10 +611,11 @@ class gTools_plotter:
         if local is True:
             localpath = os.getcwd().split("/")
             tags = [x for x in self.odir.split("/") if x not in localpath]
-            fname = "plot_" + "_".join(tags) + ".pdf"
+            fname = "plot_"  + "_".join(tags) + ".pdf"
             self.savefig(fname, local=True)
         else:
-            self.savefig("plot.pdf")
+            fname = "plot.pdf"
+            self.savefig(fname)
 
 ### Functions
 
@@ -814,7 +831,15 @@ if __name__ == "__main__":
     parser.add_argument("-begin", type=int, default=0, help="Begin from time X (fs)")
     parser.add_argument("-end", type=int, default=None, help="End at time X (fs)")
     parser.add_argument("-large", action="store_true", help="Can plot 9 plots")
+    parser.add_argument("-splitlen", metavar="slen", default=10, help="Length of timewindow for RMSF calculation (ns). If multiple than separated with comma")
     args = parser.parse_args()
+    timescales = []
+    try:
+        timescales = args.splitlen.split(",")
+    except AttributeError:
+        timescales.append(args.splitlen)
+    timescales = [int(i) for i in timescales]
+#    print timescales
 
     # Comment following lines out
     #args.f = "./config_1us.cfg"
@@ -878,7 +903,7 @@ if __name__ == "__main__":
     print "Found %s models in %s groups" % (nmodels, ngroups)
     print "\n".join(map(lambda x: " ".join(str(y) for y in x), groupfolderlist)) 
 
-    dummyrunner = gTools_runner(groupfolderlist[0][1], dryrun=args.n, verbose=args.v,
+    dummyrunner = gTools_runner(groupfolderlist[0][1], splitlen=timescales, dryrun=args.n, verbose=args.v,
                                 group=groupfolderlist[0][0], **settings)
     
     print "Making ndx with '%s'" % dummyrunner.ndxparams
@@ -890,7 +915,7 @@ if __name__ == "__main__":
     
     # Function to run in the multithreader
     def runandplot(folder, group=0):
-        runner = gTools_runner(wdir=folder, dryrun=args.n, verbose=args.v,
+        runner = gTools_runner(wdir=folder, splitlen=timescales, dryrun=args.n, verbose=args.v,
                                group=group, **settings)
         runner.runall(mindist=args.nomindist, pdbout=args.nopdb)
         files_to_plot.append(runner.getfilenames())
@@ -900,36 +925,38 @@ if __name__ == "__main__":
     
     for filenames in files_to_plot:
         if args.large:
-            plotning = gTools_plotter(filenames, filenames.get_folder(), begin=args.begin, figsize=(11.69, 11.69))
+            plotning = gTools_plotter(filenames, filenames.get_folder(), begin=args.begin, splitlen=timescales, figsize=(11.69, 11.69))
             plotning.plotall(local=args.local, ncols=3, nrows=3)
         else:
-            plotning = gTools_plotter(filenames, filenames.get_folder(), begin=args.begin)
+            plotning = gTools_plotter(filenames, filenames.get_folder(), begin=args.begin, splitlen=timescales)
             plotning.plotall(local=args.local)
         plt.close()
 
     if args.nogroup is False:
         groups = sorted(list(set(map(lambda x: x.get_group(), files_to_plot))))  # Get unique groups
         group_sorted = [[y for y in files_to_plot if y.get_group() == x] for x in groups]  # Sort groups
-        groupplotter = gTools_plotter(None, None, begin=args.begin, end=args.end)  # Get new plotter (only for its functions)
+
         # Printing rmsf together
         allchains = settings["chains"][:]
         # Remove chains from plot here:
         # allchains.remove("chA")
-        for idx, chain in enumerate(allchains):  # settings["chains"]):
-            groupplotter.addplot(len(allchains), 1, idx+1)  # settings["chains"]), 1, idx+1)
-            for (label_g, model_g) in zip(groups, group_sorted):
-                groupedfnames = []
-                shift = 0
-                # Align chains here:
-                #if ("p62" in label_g) and (chain == "chB"):
-                #    shift = 709
-                for model in model_g:
-                    try:
-                        groupedfnames.extend(model["rmsf_"+chain+"_n_C-alpha"])
-                    except IOError:
-                        groupedfnames.extend(model["rmsf_"+chain+"_&_C-alpha"])
-                label_cleaned = label_g.replace("_", " ")
-                groupplotter.resplotstd(groupedfnames, label_cleaned, std_bar=False, shift=shift)  # , std_fill=False)
-                groupplotter.axlist[-1].legend()
-        groupplotter.savefig("grouped_plot.pdf", local=True)
+        for i in timescales:
+            groupplotter = gTools_plotter(None, None, begin=args.begin, end=args.end, splitlen=timescales)  # Get new plotter (only for its functions)
+            for idx, chain in enumerate(allchains):  # settings["chains"]):
+                groupplotter.addplot(len(allchains), 1, idx+1)  # settings["chains"]), 1, idx+1)
+                for (label_g, model_g) in zip(groups, group_sorted):
+                    groupedfnames = []
+                    shift = 0
+                    # Align chains here:
+                    #if ("p62" in label_g) and (chain == "chB"):
+                    #    shift = 709
+                    for model in model_g:                    
+                        try:
+                            groupedfnames.extend(model["rmsf"+str(i)+"_"+chain+"_n_C-alpha"])
+                        except IOError:
+                            groupedfnames.extend(model["rmsf"+str(i)+"_"+chain+"_&_C-alpha"])
+                    label_cleaned = label_g.replace("_", " ")
+                    groupplotter.resplotstd(groupedfnames, label_cleaned, std_bar=False, shift=shift)  # , std_fill=False)
+                    groupplotter.axlist[-1].legend()
+            groupplotter.savefig("grouped_plot_rmsf"+str(i)+".pdf", local=True)            
 

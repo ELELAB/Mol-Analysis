@@ -1,4 +1,14 @@
-usage: Mol_Analysis9_6.py [-h] [-f config.cfg] [-n] [-nomindist] [-nopdb] [-v]
+Computational Biology Laboratory, Danish Cancer Society Research Center, Strandboulevarden 49, 2100, Copenhagen, Denmark
+
+The Mol_Analysis.py script is a script that assist in the basics analyses of MD simulations with GROMACS tools. It provides both the raw output data and different pdf reports with the summary of the analyses. The pdf are produced thanks to matplotlib.
+
+To run Mol_Analysis.py, the user needs  a config file in which to specifity the input files and the group definition for GROMACS index files. An example of config file and its syntax is reported in this repository (config.cfg). 
+
+In particular Mol_Analysis.py allows the following steps/analyses: i) calculation of minimal distance between the protein and its periodic image to check PBC issues using g_mindist, ii) centering of the trajectory in the box for analyses, iii) root mean square deviation, iv) radius of gyration, v) root mean square fluctuation, vi) comparison of different trajectories
+
+More information on the options and command line here:
+
+usage: Mol_Analysis.py [-h] [-f config.cfg] [-n] [-nomindist] [-nopdb] [-v]
                           [-nt N] [-local] [-nogroup] [-begin BEGIN]
                           [-end END] [-large]
 
@@ -17,3 +27,12 @@ optional arguments:
   -begin BEGIN   Begin from time X (fs)
   -end END       End at time X (fs)
   -large         Can plot 9 plots
+  -splitlen      slen Lenght of timewindow for RMSF calculation (in ns, default=10 ns)
+		 if multiple times need to be calculated then separate with a comma
+
+
+When using the Mol_Analysis.py for publication please cite:
+
+Matteo Lambrughi, Matteo Tiberti, Maria Francesca Allega, Valentina Sora, Mads Nygaard, Agota Toth, Juan Salamanca Viloria, Emmanuelle Bignon, Elena Papaleo*, Analyzing biomolecular ensembles, in preparation.
+
+
