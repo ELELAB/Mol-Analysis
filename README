@@ -30,6 +30,10 @@ optional arguments:
   -splitlen      slen Lenght of timewindow for RMSF calculation (in ns, default=10 ns)
 		 if multiple times need to be calculated then separate with a comma
 
+COMMAND LINE (if you run in remote use ssh -X -Y):
+
+python -u Mol_Analysis.py -f config.cfg
+
 NOTES:
 
 If in running the script you have an error message related to the name of the gromacs tool, try to  set the function renaming to False on line 30 and run again. It is a temporary fix. We are working on it.
