@@ -34,6 +34,8 @@ COMMAND LINE (if you run in remote use ssh -X -Y):
 
 python -u Mol_Analysis.py -f config.cfg
 
+python -u Mol_Analysis.py -n  #if the calculation was already carried out but the plots were not generate - this will read the output files and generate the report
+
 NOTES:
 
 If in running the script you have an error message related to the name of the gromacs tool, try to  set the function renaming to False on line 30 and run again. It is a temporary fix. We are working on it.
