@@ -11,7 +11,8 @@
 
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 __author__ = "Mads Nygaard, Agota Toth"
 __date__ = "20171211"
 
@@ -167,7 +168,7 @@ class gTools_runner:
 
         for chain in self.fnames.get_chains():
             if not any(n in chain.lower() for n in ["ch", "protein"]):
-                print "Something fishy is going on with the chains"
+                print("Something fishy is going on with the chains")
             elif "protein" in chain.lower():
                 params.append("1 & 3")
             else:
@@ -190,15 +191,15 @@ class gTools_runner:
         else:
             splits.append((start, (start+newdt)))
             for n in range(start+newdt, stop, newdt):
-#		print self.trjdt
+               #print(self.trjdt)
                 splits.append((n+self.trjdt, (n+newdt)))
             return splits
 
     def _errorcatch(self, excode, stdo, erro, funname):
         """Not used"""
-        print erro
-        print stdo
-        print "Something went wrong, %s exited with errorcode %s"
+        print(erro)
+        print(stdo)
+        print("Something went wrong, %s exited with errorcode %s")
         raw_input("Press any key to continiue")
 
     def _addfilename(self, key, fname):
@@ -222,18 +223,18 @@ class gTools_runner:
                 stdout=False,
                 stderr=False
                 )
-        print "Getting info from traj"
+        print("Getting info from traj")
         excode, out, err = g_check.run()
         for line in err.split("\n"):
             sline = line.split()
             if all(k in sline for k in ("don't", "match")):
-                print " ".join(sline)
+                print(" ".join(sline))
                 import re
                 if len(re.findall(r"\((\d+)[ ,]", " ".join(sline))) > 0:
                     self.trjdt = int(re.findall(r"\((\d+)[ ,]", " ".join(sline))[0])
             if len(sline) > 1:
                 if "Time" == sline[0]:
-                    comments = map(int, sline[1:])
+                    comments = list(map(int, sline[1:]))
                     break
         self.frames = comments[0]
         if len(comments) > 1:
@@ -245,7 +246,7 @@ class gTools_runner:
 
     def mkndx(self, commands, ffile=None, **kwargs):
         """Runs gromacs make_ndx with commands(list)"""
-        if commands[-1].lower() is not "q":
+        if commands[-1].lower() != "q":
             commands = list(commands)
             commands.append("q")
         if ffile is None:
@@ -256,7 +257,7 @@ class gTools_runner:
                 input=commands
                 )
         if not self.dryrun:
-            print "Making ndx file"
+            print("Making ndx file")
             g_mkndx.run(**kwargs)
 
     def mindist(self, **kwargs):
@@ -274,7 +275,7 @@ class gTools_runner:
                 )
 
         if not self.dryrun:
-            print "Running mindist"
+            print("Running mindist")
             excode, out, err = g_mindist.run(**kwargs)
         if not self.dryrun:
             for line in out.split("\n"):
@@ -294,7 +295,7 @@ class gTools_runner:
                 input="Protein",
                 )
         if not self.dryrun:
-            print "Updating conf"
+            print("Updating conf")
             excode, out, err = g_editconf.run()
 
     def trjconv(self, **kwargs):
@@ -313,7 +314,7 @@ class gTools_runner:
                 input=("Protein", center, "Protein"),
                 )  # trjconv -f traj.trr -s npt.tpr -dump time -o confout.dump.gro -sep -pbc mol -ur compact
         if not self.dryrun:
-            print "Centering trajectory"
+            print("Centering trajectory")
             excode, out, err = g_trjconv.run()
         self.getinfo(self.outf)
 
@@ -331,7 +332,7 @@ class gTools_runner:
                     input=(chain, chain),
                     )
             if not self.dryrun:
-                print "Calculating RMSD"
+                print("Calculating RMSD")
                 excode, out, err = g_rmsd.run()
 
     def rg(self, **kwargs):
@@ -345,7 +346,7 @@ class gTools_runner:
                 input="protein",
                 )
         if not self.dryrun:
-            print "Calculating Rg"
+            print("Calculating Rg")
             excode, out, err = g_rg.run()
 
     def rmsf(self, splitlen, **kwargs):
@@ -376,7 +377,7 @@ class gTools_runner:
                         input=(chain, chain),
                         )
                 if not self.dryrun:
-                    print "Calculating RMSF t %s to %s" % (begin, end)
+                    print("Calculating RMSF t %s to %s" % (begin, end))
                     excode, out, err = g_rmsf.run()
 
     def pdbout(self, pdbname="pdbmovie.pdb", **kwargs):
@@ -389,7 +390,7 @@ class gTools_runner:
                 input=["Protein", "Protein"]
                 )
         if not self.dryrun:
-            print "Printing .pdb movie"
+            print("Printing .pdb movie")
             excode, out, err = g_pdbout.run(**kwargs)
 
     def runall(self, **kwargs):
@@ -448,17 +449,17 @@ class gTools_plotter:
         self.fig = plt.figure(figsize=figsize)
         plt.rc('axes', prop_cycle=(cycler('color', ['k', 'r', 'g', 'b', 'm', 'y', 'c'])))
         self.axlist = []
-        print self.odir
+        print(self.odir)
     
     def _filter_rmsfiles(self, flist, begin, end):
         # Removing rmsf times if begin is set
         if end is not None:
             shortend_list = [f for f in flist if (int(
-                            re.search("(\d+)\.xvg", f).group(1)) >= begin) and 
-                            (int(re.search("(\d+)\.xvg", f).group(1)) <= end)]
+                            re.search(r"(\d+)\.xvg", f).group(1)) >= begin) and 
+                            (int(re.search(r"(\d+)\.xvg", f).group(1)) <= end)]
         else:
             shortend_list = [f for f in flist if (int(
-                            re.search("(\d+)\.xvg", f).group(1)) >= begin)]
+                            re.search(r"(\d+)\.xvg", f).group(1)) >= begin)]
 
         if len(shortend_list) <= 0:
             print("Less than 0 rmsf files after filtering, using original list")
@@ -591,11 +592,11 @@ class gTools_plotter:
         nplots = len(self.fnames.keys())
         if nrows==2 and nplots>6:
             sys.exit("More than 6 plot! Please use -large")
-        print "Plotting %s plots" % (nplots)
+        print("Plotting %s plots" % (nplots))
         self.fig.suptitle(self.odir)
         self.fig.add_subplot(ncols, nrows, 1)
         count = 0
-        for key, flist in sorted(self.fnames.iteritems()):
+        for key, flist in sorted(self.fnames.items()):
             count += 1
             self.addplot(ncols, nrows, count)
             if "rmsf" in key:
@@ -663,8 +664,8 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     from math import factorial
 
     try:
-        window_size = np.abs(np.int(window_size))
-        order = np.abs(np.int(order))
+        window_size = np.abs(int(window_size))
+        order = np.abs(int(order))
     except ValueError:
         raise ValueError("window_size and order have to be of type int")
     if window_size % 2 != 1 or window_size < 1:
@@ -689,35 +690,34 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
 
 if __name__ == "__main__":
     import argparse
-    import ConfigParser
+    import configparser
     import tempfile
     import re
     # Classes in Main
 
-    class ListConfigParser(ConfigParser.SafeConfigParser):
-        """Modified ConfigParser to read configfile with lists"""
+    class Listconfigparser(configparser.ConfigParser):
         def listread(self, fname):
-            """Reads a config with a list under [Folders] tag"""
-            self.dirs = []  # For the list of folders with labels
-            tfile = tempfile.TemporaryFile()
-            with open(fname, "r") as f:
-                for line in f.readlines():
-                    if line.strip() == "[Folders]":
-                        folderlist = True
-                        continue
-                    elif "[" in line.strip():
-                        folderlist = False
-                        tfile.write(line)
-                    # Sort out blank lines and comments
-                    elif folderlist is True and line.strip() is not "" and not line.startswith("#"):  
-                        if len(line.strip().split()) == 1:  # If no label, put in group 0
-                            self.dirs.append(tuple(["0", line.strip()]))
-                        elif len(line.strip().split()) == 2:
-                            self.dirs.append(tuple(line.strip().split()))
-                    elif folderlist is False:  # Parse the rest to a tempfile for standard configparser
-                        tfile.write(line)
-            tfile.seek(0)  # Read tempfile from line 0
-            self.readfp(tfile)
+            self.dirs = []
+            # Open the temporary file in text mode with UTF-8 encoding
+            with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as tfile:
+                with open(fname, "r") as f:
+                    folderlist = False
+                    for line in f:
+                        if line.strip() == "[Folders]":
+                            folderlist = True
+                            continue
+                        elif "[" in line and folderlist:
+                            folderlist = False
+                        if folderlist and line.strip() and not line.startswith("#"):
+                            parts = line.strip().split(None, 1)
+                            if len(parts) == 1:
+                                self.dirs.append(("0", parts[0]))
+                            else:
+                                self.dirs.append(tuple(parts))
+                        elif not folderlist:
+                            tfile.write(line)
+                tfile.seek(0)
+                self.read_file(tfile)
             return self.getlist()
 
         def listwrite(self, f):
@@ -743,7 +743,7 @@ if __name__ == "__main__":
             return self.dirs
 
     def multithreader(l_processes, n_threads):  # A default mulithreader
-        import Queue
+        import queue
         import threading
         import time
         exitFlag = 0
@@ -758,9 +758,9 @@ if __name__ == "__main__":
                 self.q = q
 
             def run(self):
-                print "Starting T" + self.name
+                print("Starting T" + self.name)
                 process_data(self.name, self.q)
-                print "Exiting T" + self.name
+                print("Exiting T" + self.name)
 
         def process_data(threadName, q):
             while not exitFlag:
@@ -769,7 +769,7 @@ if __name__ == "__main__":
                     data = q.get()
                     queueLock.release()
                     time.sleep(float(threadName)*0.01)
-                    print "T%s running:%s" % (threadName, data[1])
+                    print("T%s running:%s" % (threadName, data[1]))
                     runandplot(data[1], group=data[0])
                 else:
                     queueLock.release()
@@ -777,7 +777,7 @@ if __name__ == "__main__":
         threadList = range(n_threads)
         nameList = l_processes
         queueLock = threading.Lock()
-        workQueue = Queue.Queue(0)
+        workQueue = queue.Queue(0)
         threads = []
         threadID = 1
         tnow = time.time()
@@ -805,8 +805,8 @@ if __name__ == "__main__":
         # Wait for all threads to complete
         for t in threads:
             t.join()
-        print "Exiting Main Thread after %d sec" % (time.time()-tnow)
-
+        print("Exiting Main Thread after %d sec" % (time.time()-tnow)
+)
     ### Argparser
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -851,7 +851,7 @@ if __name__ == "__main__":
     #args.begin = 10000
 
     # Start by reading config file
-    config = ListConfigParser()
+    config = Listconfigparser()
     config.listread(args.f)
     groupfolderlist = config.getlist()
     # Storing defaults here:
@@ -859,7 +859,7 @@ if __name__ == "__main__":
                 "outf": "center_traj.xtc", "outs": "updated.gro",
                 "ndxfile": "index.ndx", "ndxparams": None,
                 "chains": ["Protein"], "center": "Protein", "skip": None,
-                "dt": None}
+                "dt": 1}
 
     # Sorting out the config file, switching out the defaults:
     for key in sorted(settings.keys()):
@@ -873,7 +873,7 @@ if __name__ == "__main__":
             elif "chains" in key:
                 option = [option]
             settings[key] = option
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             if key == "f" or key == "tpr":
                 raise LookupError("Please specify name for "'"%s"'" in "
                                   "the config file." % (key))
@@ -883,32 +883,32 @@ if __name__ == "__main__":
 
     # Checking if folders/files exist
 
-    for single_folder in zip(*groupfolderlist)[1]:
+    for single_folder in list(zip(*groupfolderlist))[1]:
         if os.path.isdir(single_folder):
             if args.n is False:
                 for test_file in ["f", "tpr"]:
                     if not os.path.isfile(single_folder+"/"+settings[test_file]):
-                        print "Cannot find file   %s" % (single_folder+"/"+settings[test_file])
+                        print("Cannot find file   %s" % (single_folder+"/"+settings[test_file]))
                         missing_folder = True
         else:
-            print "Cannot find folder %s" % (single_folder) 
+            print("Cannot find folder %s" % (single_folder) )
             missing_folder = True
 
     if missing_folder is True:
         raise IOError("Some folders/files not found")
 
-    ngroups = len(set(zip(*groupfolderlist)[0]))
+    ngroups = ngroups = len(set(list(zip(*groupfolderlist))[0]))
     nmodels = len(groupfolderlist)
     
-    print "Found %s models in %s groups" % (nmodels, ngroups)
-    print "\n".join(map(lambda x: " ".join(str(y) for y in x), groupfolderlist)) 
+    print("Found %s models in %s groups" % (nmodels, ngroups))
+    print("\n".join(map(lambda x: " ".join(str(y) for y in x), groupfolderlist)))
 
     dummyrunner = gTools_runner(groupfolderlist[0][1], splitlen=timescales, dryrun=args.n, verbose=args.v,
                                 group=groupfolderlist[0][0], **settings)
     
-    print "Making ndx with '%s'" % dummyrunner.ndxparams
-    print "Centering with  '%s'" % dummyrunner.center
-    print "Chain[s] set to '%s'" % dummyrunner.fnames.get_chains()
+    print("Making ndx with '%s'" % dummyrunner.ndxparams)
+    print("Centering with  '%s'" % dummyrunner.center)
+    print("Chain[s] set to '%s'" % dummyrunner.fnames.get_chains())
 
     # List for grabbing data from the multithreader...
     files_to_plot = []
