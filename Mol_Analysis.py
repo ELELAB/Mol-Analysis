@@ -13,8 +13,8 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #!/usr/bin/env python3
 
-__author__ = "Mads Nygaard, Agota Toth"
-__date__ = "20171211"
+__author__ = "Mads Nygaard, Agota Toth, Joachim Breitenstein"
+__date__ = "12032024"
 
 ### Global dependencies
 import os
