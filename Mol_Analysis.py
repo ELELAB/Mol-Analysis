@@ -326,7 +326,7 @@ class gTools_runner:
             self._addfilename("rmsd", outfile)
             g_rmsd = gromacs.tools.G_rms(
                     f=self.outf,
-                    s=self.outs,
+                    s=self.tpr,
                     o=outfile,
                     n=self.ndxfile,
                     input=(chain, chain),
@@ -341,7 +341,7 @@ class gTools_runner:
         self._addfilename("rg", outfile)
         g_rg = gromacs.tools.G_gyrate(
                 f=self.outf,
-                s=self.outs,
+                s=self.tpr,
                 o=outfile,
                 input="protein",
                 )
@@ -367,7 +367,7 @@ class gTools_runner:
                 self._addfilename("rmsf" + str(splitlen) + "_" + chain_fname, outfile)
                 g_rmsf = gromacs.tools.G_rmsf(
                         f=self.outf,
-                        s=self.outs,
+                        s=self.tpr,
                         o=outfile,
                         od=self.odir + "rmsf"+str(splitlen) + "/rmsf_od_%s_%s.xvg" % (chain_fname, end),
                         b=begin,
@@ -384,7 +384,7 @@ class gTools_runner:
         """Outputs a pdb trajectory, protein fitted of the centered traj"""
         g_pdbout = gromacs.tools.Trjconv(
                 f=self.outf,
-                s=self.outs,
+                s=self.tpr,
                 o=self.odir + pdbname,
                 fit="rot+trans",
                 input=["Protein", "Protein"]
