@@ -35,6 +35,7 @@ if True:
 
     rename_attribute(gromacs.tools, "Make_ndx_mpi", "Make_ndx")
     rename_attribute(gromacs.tools, "Trjconv_mpi", "Trjconv")
+    rename_attribute(gromacs.tools, "Convert_tpr_mpi", "Convert_tpr")
     rename_attribute(gromacs.tools, "Gmxcheck_mpi", "Gmxcheck")
     rename_attribute(gromacs.tools, "G_mindist_mpi", "G_mindist")
     rename_attribute(gromacs.tools, "Editconf_mpi", "Editconf")
@@ -87,7 +88,7 @@ class fnamesclass(dict):
 class gTools_runner:
     """Runs gromacs wrapper, keeps track of input/output filenames etc."""
     def __init__(self, wdir, odir="Mol_An", splitlen=[10], f=None, tpr=None, ndxfile=None,
-                 outf=None, outs=None, chains=None, center=None,
+                 outf=None, outs=None, outp=None, chains=None, center=None,
                  ndxparams=None, dryrun=False, skip=None, verbose=False,
                  dt=None, group=0):
 
@@ -123,6 +124,7 @@ class gTools_runner:
         self.ndxfile = self.odir + ndxfile
         self.outf = self.odir + outf
         self.outs = self.odir + outs
+        self.outp = self.odir + outp
         self.f = self.wdir + f
         self.tpr = self.wdir + tpr
         self.logfile = self.odir + "file.log"
@@ -318,6 +320,17 @@ class gTools_runner:
             excode, out, err = g_trjconv.run()
         self.getinfo(self.outf)
 
+    def convert_tpr(self, **kwargs):
+        """Generates a new tpr file with a specific selection of atoms"""
+        g_convert_tpr = gromacs.tools.Convert_tpr(
+                s=self.tpr,
+                o=self.outp,
+                n=self.ndxfile,
+                input = "Protein")  # echo "Protein" | gmx_mpi convert_tpr -s sim.tpr -o update.tpr -index index.ndx:
+        if not self.dryrun:
+            print("Generating filtered tpr")
+            excode, out, err = g_convert_tpr.run()
+
     def rmsd(self, **kwargs):
         """Calcs the rmsd for the two chains"""
         chains = self.fnames.get_chains()
@@ -326,7 +339,7 @@ class gTools_runner:
             self._addfilename("rmsd", outfile)
             g_rmsd = gromacs.tools.G_rms(
                     f=self.outf,
-                    s=self.tpr,
+                    s=self.outp,
                     o=outfile,
                     n=self.ndxfile,
                     input=(chain, chain),
@@ -341,7 +354,7 @@ class gTools_runner:
         self._addfilename("rg", outfile)
         g_rg = gromacs.tools.G_gyrate(
                 f=self.outf,
-                s=self.tpr,
+                s=self.outp,
                 o=outfile,
                 input="protein",
                 )
@@ -367,7 +380,7 @@ class gTools_runner:
                 self._addfilename("rmsf" + str(splitlen) + "_" + chain_fname, outfile)
                 g_rmsf = gromacs.tools.G_rmsf(
                         f=self.outf,
-                        s=self.tpr,
+                        s=self.outp,
                         o=outfile,
                         od=self.odir + "rmsf"+str(splitlen) + "/rmsf_od_%s_%s.xvg" % (chain_fname, end),
                         b=begin,
@@ -384,7 +397,7 @@ class gTools_runner:
         """Outputs a pdb trajectory, protein fitted of the centered traj"""
         g_pdbout = gromacs.tools.Trjconv(
                 f=self.outf,
-                s=self.tpr,
+                s=self.outp,
                 o=self.odir + pdbname,
                 fit="rot+trans",
                 input=["Protein", "Protein"]
@@ -395,17 +408,22 @@ class gTools_runner:
 
     def runall(self, **kwargs):
         self.torun = {"mkndx": True, "mindist": True, "trjconv": True,
-                      "editconf": True, "rmsd": True, "rg": True, "rmsf": True,
-                      "pdbout": True}
+                      "editconf": True, "convert_tpr": True, "rmsd": True,
+                      "rg": True, "rmsf": True, "pdbout": True}
         self.torun.update(kwargs)
 
         if self.torun["mkndx"] is True:   # To create the .gro file
             self.mkndx(commands=self.ndxparams, ffile=self.tpr)
             #print self.ndxparams
+
         if self.torun["editconf"] is True:
             self.editconf()
 #        if self.torun["mkndx"] is True:          #Consisting of only protein
 #            self.mkndx(commands = self.ndxparams, ffile = self.outs)
+
+        if self.torun["convert_tpr"] is True:
+            self.convert_tpr()
+
         if self.torun["trjconv"] is True:
             self.trjconv()
         else:
@@ -857,9 +875,9 @@ if __name__ == "__main__":
     # Storing defaults here:
     settings = {"odir": "Mol_An", "f": None, "tpr": None,
                 "outf": "center_traj.xtc", "outs": "updated.gro",
-                "ndxfile": "index.ndx", "ndxparams": None,
-                "chains": ["Protein"], "center": "Protein", "skip": None,
-                "dt": 1}
+                "outp": "updated.tpr", "ndxfile": "index.ndx",
+                "ndxparams": None, "chains": ["Protein"], "center": "Protein",
+                "skip": None, "dt": 1}
 
     # Sorting out the config file, switching out the defaults:
     for key in sorted(settings.keys()):
