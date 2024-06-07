@@ -132,7 +132,7 @@ class gTools_runner:
         self.fnames = fnamesclass()
         self.fnames.set_group(group)
         self.fnames.set_folder(self.odir)
-        
+
         if center is None:
             self.center = "Protein"
         else:
@@ -158,9 +158,9 @@ class gTools_runner:
         """Very crude script to guess parameters for creation of ndx file.
         Returns list of params. Self.chains, self.center needs to be
         specified"""
-        
+
         params = []
-        if ndxparams is not None: 
+        if ndxparams is not None:
             if type(ndxparams) is not list:
                 ndxparams = [ndxparams]
 
@@ -177,8 +177,8 @@ class gTools_runner:
                 params.append("chain " + chain.lower().split("ch ")[-1])
                 params.append("chain " + chain.lower().split("ch ")[-1] + " & 3")
         params.append(self.center.replace("_", " ").replace("C-alpha", "3"))
-        return list(set(params)) 
-        
+        return list(set(params))
+
     def _timesplit(self, newdt, stop, start=0):
         """Returns list of (start,stop) points to split a trajectory
         based on the newdt value."""
@@ -439,12 +439,11 @@ class gTools_runner:
             self.rg()
 
         if self.torun["rmsf"] is True:
-            for i in self.splitlen:                
+            for i in self.splitlen:
                 self.rmsf(i)
 
         if self.torun["pdbout"] is True:
             self.pdbout(skip=100)
-
 
 class gTools_plotter:
     """Plotting tool for xvg files made with Gromacs.
@@ -468,12 +467,12 @@ class gTools_plotter:
         plt.rc('axes', prop_cycle=(cycler('color', ['k', 'r', 'g', 'b', 'm', 'y', 'c'])))
         self.axlist = []
         print(self.odir)
-    
+
     def _filter_rmsfiles(self, flist, begin, end):
         # Removing rmsf times if begin is set
         if end is not None:
             shortend_list = [f for f in flist if (int(
-                            re.search(r"(\d+)\.xvg", f).group(1)) >= begin) and 
+                            re.search(r"(\d+)\.xvg", f).group(1)) >= begin) and
                             (int(re.search(r"(\d+)\.xvg", f).group(1)) <= end)]
         else:
             shortend_list = [f for f in flist if (int(
@@ -482,7 +481,7 @@ class gTools_plotter:
         if len(shortend_list) <= 0:
             print("Less than 0 rmsf files after filtering, using original list")
             shortend_list = flist
-        return shortend_list 
+        return shortend_list
 
     def resplotstd(self, flist, label, ax=None, std_fill=True, std_bar=True,
                    shift=0, **kwargs):
@@ -509,7 +508,7 @@ class gTools_plotter:
         ax.set_ylabel(yaxis)
         #ax.set_ylim((0, upperstd[2:-3].max()))
         ax.set_xlim((data[0].min(), data[0].max()))
-        ax.tick_params(direction='out') 
+        ax.tick_params(direction='out')
         ax.yaxis.tick_left()
         ax.xaxis.tick_bottom()
 
@@ -575,7 +574,7 @@ class gTools_plotter:
             else:
                 self.axlist[-1].set_xlim(xmin=self.begin/1000)
 
-            self.axlist[-1].tick_params(direction='out') 
+            self.axlist[-1].tick_params(direction='out')
             self.axlist[-1].yaxis.tick_left()
             self.axlist[-1].xaxis.tick_bottom()
 #           ylims = None
@@ -884,10 +883,10 @@ if __name__ == "__main__":
         try:
             option = config.get("Settings", key)
             if "," in option:
-                option = map(lambda s: s.strip(), option.split(",")) 
+                option = map(lambda s: s.strip(), option.split(","))
             elif "none" in option.lower():
                 option = None
-                continue 
+                continue
             elif "chains" in key:
                 option = [option]
             settings[key] = option
@@ -897,7 +896,7 @@ if __name__ == "__main__":
                                   "the config file." % (key))
             print("No setting for '"'%s'"' found, "
                   "will try default: %s" % (key, settings[key]))
-    missing_folder = False 
+    missing_folder = False
 
     # Checking if folders/files exist
 
@@ -917,30 +916,30 @@ if __name__ == "__main__":
 
     ngroups = ngroups = len(set(list(zip(*groupfolderlist))[0]))
     nmodels = len(groupfolderlist)
-    
+
     print("Found %s models in %s groups" % (nmodels, ngroups))
     print("\n".join(map(lambda x: " ".join(str(y) for y in x), groupfolderlist)))
 
     dummyrunner = gTools_runner(groupfolderlist[0][1], splitlen=timescales, dryrun=args.n, verbose=args.v,
                                 group=groupfolderlist[0][0], **settings)
-    
+
     print("Making ndx with '%s'" % dummyrunner.ndxparams)
     print("Centering with  '%s'" % dummyrunner.center)
     print("Chain[s] set to '%s'" % dummyrunner.fnames.get_chains())
 
     # List for grabbing data from the multithreader...
     files_to_plot = []
-    
+
     # Function to run in the multithreader
     def runandplot(folder, group=0):
         runner = gTools_runner(wdir=folder, splitlen=timescales, dryrun=args.n, verbose=args.v,
                                group=group, **settings)
         runner.runall(mindist=args.nomindist, pdbout=args.nopdb)
         files_to_plot.append(runner.getfilenames())
-    
+
     # Adding it all to the multithreader
     multithreader(groupfolderlist, args.nt)
-    
+
     for filenames in files_to_plot:
         if args.large:
             plotning = gTools_plotter(filenames, filenames.get_folder(), begin=args.begin, splitlen=timescales, figsize=(11.69, 11.69))
@@ -968,7 +967,7 @@ if __name__ == "__main__":
                     # Align chains here:
                     #if ("p62" in label_g) and (chain == "chB"):
                     #    shift = 709
-                    for model in model_g:                    
+                    for model in model_g:
                         try:
                             groupedfnames.extend(model["rmsf"+str(i)+"_"+chain+"_n_C-alpha"])
                         except IOError:
@@ -976,5 +975,5 @@ if __name__ == "__main__":
                     label_cleaned = label_g.replace("_", " ")
                     groupplotter.resplotstd(groupedfnames, label_cleaned, std_bar=False, shift=shift)  # , std_fill=False)
                     groupplotter.axlist[-1].legend()
-            groupplotter.savefig("grouped_plot_rmsf"+str(i)+".pdf", local=True)            
+            groupplotter.savefig("grouped_plot_rmsf"+str(i)+".pdf", local=True)
 
