@@ -1,4 +1,8 @@
-#    Copyright (C) 2018 Matteo Lambrughi, Matteo Tiberti, Maria Francesca Allega, Valentina Sora, Mads Nygaard, Agota Toth, Juan Salamanca Viloria, Emmanuelle Bignon, Elena Papaleo <elenap@cancer.dk>, Computaitonal Biology Laboratory, Danish Cancer Society Research Center, 2100, Copenhagen, Denmark
+#    Copyright (C) 2018 Matteo Lambrughi, Matteo Tiberti, Maria Francesca
+# Allega, Valentina Sora, Mads Nygaard, Agota Toth, Juan Salamanca Viloria,
+# Emmanuelle Bignon, Elena Papaleo <elenap@cancer.dk>, Cancer Structural
+# Biology, Danish Cancer Society Research Center, 2100, Copenhagen, Denmark
+#    Copyright (C) 2024 Joachim Breitenstein, Matteo Tiberti
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
@@ -13,8 +17,8 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #!/usr/bin/env python3
 
-__author__ = "Mads Nygaard, Agota Toth, Joachim Breitenstein"
-__date__ = "12032024"
+__author__ = "Mads Nygaard, Agota Toth, Joachim Breitenstein, Matteo Tiberti"
+__date__ = "07062024"
 
 ### Global dependencies
 import os
