@@ -615,7 +615,13 @@ class gTools_plotter:
             sys.exit("More than 6 plot! Please use -large")
         print("Plotting %s plots" % (nplots))
         self.fig.suptitle(self.odir)
-        self.fig.add_subplot(ncols, nrows, 1)
+        #self.fig.add_subplot(ncols, nrows, 1)
+        
+        protein_name = self.odir.split('/')[6]  
+
+        # Set the title with the protein name and "simulation"
+        self.fig.suptitle(f"{protein_name} simulation")
+
         count = 0
         for key, flist in sorted(self.fnames.items()):
             count += 1
