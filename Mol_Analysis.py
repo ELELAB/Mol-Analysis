@@ -603,7 +603,7 @@ class gTools_plotter:
 
     def addplot(self, ncols, nrows, count):
         self.axlist.append(self.fig.add_subplot(ncols, nrows, count))
-    
+
     def plotall(self, groupfolderlist, local=True, ncols=3, nrows=2, **kwargs):
         """Plots all files in self.fnames in one figure"""
         self.torun = {"mindist": True, "trjconv": True, "editconf": True,
