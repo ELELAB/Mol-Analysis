@@ -604,7 +604,7 @@ class gTools_plotter:
     def addplot(self, ncols, nrows, count):
         self.axlist.append(self.fig.add_subplot(ncols, nrows, count))
 
-    def plotall(self, local=True, ncols=3, nrows=2, **kwargs):
+    def plotall(self, groupfolderlist, local=True, ncols=3, nrows=2, **kwargs):
         """Plots all files in self.fnames in one figure"""
         self.torun = {"mindist": True, "trjconv": True, "editconf": True,
                       "rmsd": True, "rg": True, "rmsf": True, "pdbout": True}
@@ -614,8 +614,12 @@ class gTools_plotter:
         if nrows==2 and nplots>6:
             sys.exit("More than 6 plot! Please use -large")
         print("Plotting %s plots" % (nplots))
-        self.fig.suptitle(self.odir)
-        self.fig.add_subplot(ncols, nrows, 1)
+        
+        protein_name = groupfolderlist[0][0]
+
+        # Set the title with the protein name and "simulation"
+        self.fig.suptitle(f"{protein_name} simulation")
+
         count = 0
         for key, flist in sorted(self.fnames.items()):
             count += 1
@@ -947,10 +951,10 @@ if __name__ == "__main__":
     for filenames in files_to_plot:
         if args.large:
             plotning = gTools_plotter(filenames, filenames.get_folder(), begin=args.begin, splitlen=timescales, figsize=(11.69, 11.69))
-            plotning.plotall(local=args.local, ncols=3, nrows=3)
+            plotning.plotall(groupfolderlist=groupfolderlist, local=args.local, ncols=3, nrows=3)
         else:
             plotning = gTools_plotter(filenames, filenames.get_folder(), begin=args.begin, splitlen=timescales)
-            plotning.plotall(local=args.local)
+            plotning.plotall(groupfolderlist=groupfolderlist, local=args.local)
         plt.close()
 
     if args.nogroup is False:
