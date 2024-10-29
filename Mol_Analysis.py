@@ -267,15 +267,19 @@ class gTools_runner:
             print("Making ndx file")
             g_mkndx.run(**kwargs)
 
-    def mindist(self, use_slicing=False, num_cores= 10, **kwargs):
+    def mindist(self, num_cores=10, **kwargs):
         """Runs GROMACS mindist, merging slice files with one header and all numerical data appended for plotting."""
         import glob
         import pandas as pd
-        if use_slicing:
+        
+        # Determine if slicing should be used based on num_cores
+        slicing_enabled = num_cores > 1
+
+        if slicing_enabled:
             print("Slicing enabled for mindist calculation.")
-            
+
             for splitlen in self.splitlen:
-                splitlenfs = splitlen * 1000  
+                splitlenfs = splitlen * 1000
                 try:
                     splits = self._timesplit(splitlenfs, self.simlen)
                 except AttributeError:
@@ -291,7 +295,7 @@ class gTools_runner:
 
             # Collect slice files
             slice_files = sorted(glob.glob(f"{self.odir}/mindist{splitlen}/min_pbc_dist_*.xvg"))
-            
+
             # Prepare to merge by writing the header from the first file and appending data from the rest
             merged_file = f"{self.odir}/min_pbc_dist_merged.xvg"
             all_data = []
@@ -300,7 +304,7 @@ class gTools_runner:
                 with open(slice_files[0], 'r') as first_file:
                     for line in first_file:
                         f_out.write(line)
-                
+
                 # Append data from each slice file, skipping the header
                 for file in slice_files:
                     with open(file, 'r') as f_in:
@@ -309,12 +313,12 @@ class gTools_runner:
                                 parts = line.split()
                                 time = float(parts[0])
                                 rest = parts[1:]
-                                all_data.append((time,rest))
+                                all_data.append((time, rest))
                 all_data.sort()
 
                 for time, rest in all_data:
                     f_out.write(f"{int(time)} " + " ".join(rest) + "\n")
-            
+
             # Add the merged file to fnames for plotting
             self._addfilename("mindist", merged_file)
 
@@ -486,9 +490,8 @@ class gTools_runner:
             self.getinfo(self.outf)
 
         if self.torun["mindist"] is True:
-            use_slicing = kwargs.get("use_slicing", False)
             num_cores = kwargs.get("nc", args.nc)
-            self.mindist(use_slicing=use_slicing, num_cores=num_cores)
+            self.mindist(num_cores=num_cores)
 
         if self.torun["rmsd"] is True:
             self.rmsd()
@@ -706,7 +709,7 @@ def mindist_slice(args):
 
     outfile = f"{mindist_dir}/min_pbc_dist_{begin}_{end}.xvg"
     print(f"Running g_mindist for slice {begin}-{end}, outputting to {outfile}")
-    
+
     g_mindist = gromacs.tools.G_mindist(
         f=outf,
         s=tpr,
@@ -718,7 +721,7 @@ def mindist_slice(args):
         stdout=False,
         stderr=False
     )
-    
+
     excode, out, err = g_mindist.run()
     print(f"g_mindist completed for slice {begin}-{end}: excode={excode}, err={err}")
 
@@ -946,7 +949,6 @@ if __name__ == "__main__":
     parser.add_argument("-end", type=int, default=None, help="End at time X (fs)")
     parser.add_argument("-large", action="store_true", help="Can plot 9 plots")
     parser.add_argument("-splitlen", metavar="slen", default=10, help="Length of timewindow for RMSF and mindist calculation (ns). If multiple than separated with comma")
-    parser.add_argument("-s","--use_slicing", action="store_true", help="Enable time slicing for mindist calculation")
     parser.add_argument("-nc", type=int, default = 10, help="Number of cores for mindist paralelization")
     args = parser.parse_args()
     timescales = []
@@ -1033,7 +1035,7 @@ if __name__ == "__main__":
     def runandplot(folder, group=0):
         runner = gTools_runner(wdir=folder, splitlen=timescales, dryrun=args.n, verbose=args.v,
                                group=group, **settings)
-        runner.runall(mindist=args.nomindist, pdbout=args.nopdb, use_slicing=args.use_slicing, num_cores=args.nc)
+        runner.runall(mindist=args.nomindist, pdbout=args.nopdb, num_cores=args.nc)
         files_to_plot.append(runner.getfilenames())
 
     # Adding it all to the multithreader
