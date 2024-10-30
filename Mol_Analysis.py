@@ -267,86 +267,50 @@ class gTools_runner:
             print("Making ndx file")
             g_mkndx.run(**kwargs)
 
+
     def mindist(self, num_cores=10, **kwargs):
-        """Runs GROMACS mindist, merging slice files with one header and all numerical data appended for plotting."""
-        import glob
-        import pandas as pd
+        """Merges output from mindist_slice, keeping header only once and removing duplicate rows."""
         
-        # Determine if slicing should be used based on num_cores
-        slicing_enabled = num_cores > 1
+        # Determine chunk size based on total simulation length and split
+        if not hasattr(self, 'simlen') or not hasattr(self, 'trjdt'):
+            self.getinfo(self.outf)  # Populate simlen and trjdt attributes
+        
+        chunk_size = self.simlen // num_cores
+        splits = [(i, min(i + chunk_size, self.simlen)) for i in range(0, self.simlen, chunk_size)]
+        print(f"Total time slices for mindist: {len(splits)}")
 
-        if slicing_enabled:
-            print("Slicing enabled for mindist calculation.")
+        # Run mindist_slice in parallel to generate individual .xvg files
+        pool = mp.Pool(processes=num_cores)
+        args = [(begin, end, self.outf, self.tpr, self.odir) for begin, end in splits]
+        xvg_files = [f for f in pool.map(mindist_slice, args) if f is not None]
+        pool.close()
+        pool.join()
 
-            for splitlen in self.splitlen:
-                splitlenfs = splitlen * 1000
-                try:
-                    splits = self._timesplit(splitlenfs, self.simlen)
-                except AttributeError:
-                    self.getinfo(self.outf)
-                    splits = self._timesplit(splitlenfs, self.simlen)
+        # Prepare to write the merged file
+        merged_file = f"{self.odir}/min_pbc_dist_merged.xvg"
+        with open(merged_file, 'w') as outfile:
+            first_file = True
+            last_time = None
 
-                print(f"Total time slices for mindist: {len(splits)}")
-                pool = mp.Pool(processes=num_cores)
-                args = [(begin, end, self.outf, self.tpr, self.odir, splitlen) for begin, end in splits]
-                pool.map(mindist_slice, args)
-                pool.close()
-                pool.join()
+            for file in xvg_files:
+                with open(file, 'r') as infile:
+                    for line in infile:
+                        # Identify and write the header only for the first file
+                        if line.startswith(('@', '#')):
+                            if first_file:
+                                outfile.write(line)
+                        else:
+                            # Parse time value from the first column to check for duplicates
+                            time_val = float(line.split()[0])
+                            if last_time is None or time_val > last_time:
+                                outfile.write(line)  # Write non-duplicate lines
+                                last_time = time_val
 
-            # Collect slice files
-            slice_files = sorted(glob.glob(f"{self.odir}/mindist{splitlen}/min_pbc_dist_*.xvg"))
+                first_file = False  # Header only in the first file
 
-            # Prepare to merge by writing the header from the first file and appending data from the rest
-            merged_file = f"{self.odir}/min_pbc_dist_merged.xvg"
-            all_data = []
-            with open(merged_file, 'w') as f_out:
-                # Copy header from the first file
-                with open(slice_files[0], 'r') as first_file:
-                    for line in first_file:
-                        f_out.write(line)
-
-                # Append data from each slice file, skipping the header
-                for file in slice_files:
-                    with open(file, 'r') as f_in:
-                        for line in f_in:
-                            if not line.startswith(('@', '#')):
-                                parts = line.split()
-                                time = float(parts[0])
-                                rest = parts[1:]
-                                all_data.append((time, rest))
-                all_data.sort()
-
-                for time, rest in all_data:
-                    f_out.write(f"{int(time)} " + " ".join(rest) + "\n")
-
-            # Add the merged file to fnames for plotting
-            self._addfilename("mindist", merged_file)
-
-        else:
-            # Perform standard mindist calculation without slicing
-            outfile = self.odir + "min_pbc_dist.xvg"
-            self._addfilename("mindist", outfile)
-            g_mindist = gromacs.tools.G_mindist(
-                f=self.outf,
-                s=self.tpr,
-                pi=True,
-                od=outfile,
-                input="Protein",
-                stdout=False,
-                stderr=False
-            )
-
-            if not self.dryrun:
-                print("Running standard mindist")
-                excode, out, err = g_mindist.run()
-                for line in out.split("\n"):
-                    sline = line.split()
-                    if len(sline) > 2:
-                        if ["The", "shortest", "periodic"] == sline[0:3]:
-                            self.minpdist = float(sline[5])
-                            self.mintime = float(sline[9])
-                            print(f"Found min distance: {self.minpdist} nm at time {self.mintime} ps")
-                            break
+        # Track the merged file for further analysis or plotting
+        self._addfilename("mindist", merged_file)
+        print(f"Merged file created at: {merged_file}")
 
     def editconf(self, **kwargs):
         """Generates a new conf file"""
@@ -703,39 +667,26 @@ class gTools_plotter:
 ### Functions
 
 def mindist_slice(args):
-    begin, end, outf, tpr, odir, splitlen = args
-    mindist_dir = f"{odir}/mindist{splitlen}"
-    os.makedirs(mindist_dir, exist_ok=True)
-
-    outfile = f"{mindist_dir}/min_pbc_dist_{begin}_{end}.xvg"
-    print(f"Running g_mindist for slice {begin}-{end}, outputting to {outfile}")
-
+    begin, end, outf, tpr, odir = args
+    output_file = f"{odir}/mindist_chunk_{begin}_{end}.xvg"
+    
+    # Run GROMACS mindist to generate the .xvg file for this slice
     g_mindist = gromacs.tools.G_mindist(
         f=outf,
         s=tpr,
         pi=True,
-        od=outfile,
+        od=output_file,
         b=begin,
         e=end,
         input="Protein",
         stdout=False,
         stderr=False
     )
-
+    
     excode, out, err = g_mindist.run()
+
     print(f"g_mindist completed for slice {begin}-{end}: excode={excode}, err={err}")
-
-    # Parse g_mindist output to find min distance and time
-    for line in out.split("\n"):
-        sline = line.split()
-        # Look for the specific line in g_mindist output that contains "The shortest periodic" information
-        if len(sline) > 2 and ["The", "shortest", "periodic"] == sline[0:3]:
-            min_dist = float(sline[5])  # Minimum distance
-            min_time = float(sline[9])  # Time at which min distance occurs
-            return {'min_dist': min_dist, 'min_time': min_time}  # Returning as a dictionary
-
-    # If no relevant line is found, return None
-    return None
+    return output_file  # Return valid file path
 
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
