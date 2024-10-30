@@ -281,7 +281,7 @@ class gTools_runner:
 
         # Run mindist_slice in parallel to generate individual .xvg files
         pool = mp.Pool(processes=num_cores)
-        args = [(begin, end, self.outf, self.tpr, self.odir) for begin, end in splits]
+        args = [(begin, end, self.outf, self.tpr, self.odir, self.dryrun) for begin, end in splits]
         xvg_files = [f for f in pool.map(mindist_slice, args) if f is not None]
         pool.close()
         pool.join()
@@ -667,7 +667,7 @@ class gTools_plotter:
 ### Functions
 
 def mindist_slice(args):
-    begin, end, outf, tpr, odir = args
+    begin, end, outf, tpr, odir, dryrun = args
     output_file = f"{odir}/mindist_chunk_{begin}_{end}.xvg"
     
     # Run GROMACS mindist to generate the .xvg file for this slice
@@ -683,11 +683,21 @@ def mindist_slice(args):
         stderr=False
     )
     
-    excode, out, err = g_mindist.run()
+    if not dryrun:
+        try:
+            excode, out, err = g_mindist.run()
+            if excode != 0:
+                print(f"g_mindist failed for slice {begin}-{end}: excode={excode}, err={err}")
+                return None  
+            else:
+                print(f"g_mindist completed for slice {begin}-{end}: excode={excode}")
+        except Exception as e:
+            print(f"Exception occurred while running g_mindist for slice {begin}-{end}: {e}")
+            return None  
+    else:
+        print(f"Dry run: g_mindist would have been run for slice {begin}-{end}")
 
-    print(f"g_mindist completed for slice {begin}-{end}: excode={excode}, err={err}")
-    return output_file  # Return valid file path
-
+    return output_file  
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
