@@ -307,8 +307,11 @@ class gTools_runner:
                                 last_time = time_val
 
                 first_file = False  # Header only in the first file
+        
+        #Remove mindist file slices
+        for file in xvg_files:
+            os.remove(file)
 
-        # Track the merged file for further analysis or plotting
         self._addfilename("mindist", merged_file)
         print(f"Merged file created at: {merged_file}")
 
