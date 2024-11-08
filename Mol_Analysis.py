@@ -912,7 +912,7 @@ if __name__ == "__main__":
     parser.add_argument("-begin", type=int, default=0, help="Begin from time X (fs)")
     parser.add_argument("-end", type=int, default=None, help="End at time X (fs)")
     parser.add_argument("-large", action="store_true", help="Can plot 9 plots")
-    parser.add_argument("-splitlen", metavar="slen", default=10, help="Length of timewindow for RMSF and mindist calculation (ns). If multiple than separated with comma")
+    parser.add_argument("-splitlen", metavar="slen", default=10, help="Length of timewindow for RMSF calculation (ns). If multiple than separated with comma")
     parser.add_argument("-nc", type=int, default = 10, help="Number of cores for mindist paralelization")
     args = parser.parse_args()
     timescales = []
