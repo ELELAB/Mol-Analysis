@@ -267,16 +267,20 @@ class gTools_runner:
             print("Making ndx file")
             g_mkndx.run(**kwargs)
 
-
     def mindist(self, num_cores=10, **kwargs):
         """Merges output from mindist_slice, keeping header only once and removing duplicate rows."""
         
         # Determine chunk size based on total simulation length and split
         if not hasattr(self, 'simlen') or not hasattr(self, 'trjdt'):
             self.getinfo(self.outf)  # Populate simlen and trjdt attributes
-        
+
         chunk_size = self.simlen // num_cores
-        splits = [(i, min(i + chunk_size, self.simlen)) for i in range(0, self.simlen, chunk_size)]
+        remainder = self.simlen % num_cores  # Remainder to add to the last chunk
+
+        # Create slices with the remainder added to the last chunk
+        splits = [(i, i + chunk_size) for i in range(0, self.simlen - remainder, chunk_size)]
+        splits[-1] = (splits[-1][0], splits[-1][1] + remainder)  # Adjust last slice
+
         print(f"Total time slices for mindist: {len(splits)}")
 
         # Run mindist_slice in parallel to generate individual .xvg files
@@ -307,8 +311,8 @@ class gTools_runner:
                                 last_time = time_val
 
                 first_file = False  # Header only in the first file
-        
-        #Remove mindist file slices
+
+        # Remove mindist file slices
         for file in xvg_files:
             os.remove(file)
 
@@ -672,7 +676,7 @@ class gTools_plotter:
 def mindist_slice(args):
     begin, end, outf, tpr, odir, dryrun = args
     output_file = f"{odir}/mindist_chunk_{begin}_{end}.xvg"
-    
+
     # Run GROMACS mindist to generate the .xvg file for this slice
     g_mindist = gromacs.tools.G_mindist(
         f=outf,
@@ -685,22 +689,22 @@ def mindist_slice(args):
         stdout=False,
         stderr=False
     )
-    
+
     if not dryrun:
         try:
             excode, out, err = g_mindist.run()
             if excode != 0:
                 print(f"g_mindist failed for slice {begin}-{end}: excode={excode}, err={err}")
-                return None  
+                return None
             else:
                 print(f"g_mindist completed for slice {begin}-{end}: excode={excode}")
         except Exception as e:
             print(f"Exception occurred while running g_mindist for slice {begin}-{end}: {e}")
-            return None  
+            return None
     else:
         print(f"Dry run: g_mindist would have been run for slice {begin}-{end}")
 
-    return output_file  
+    return output_file
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
