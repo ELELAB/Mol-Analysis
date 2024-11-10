@@ -694,7 +694,7 @@ def mindist_slice(begin, end, outf, tpr, odir, dryrun):
         print(f"Dry run: g_mindist would have been run for slice {begin}-{end}")
     
     data = np.loadtxt(output_file, comments=('@', '#'))
-    
+    os.remove(output_file)
     return data
 
 
