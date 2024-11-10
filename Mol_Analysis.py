@@ -286,10 +286,10 @@ class gTools_runner:
         # Run mindist_slice in parallel to generate individual .xvg files
         pool = mp.Pool(processes=num_cores)
         args = [(begin, end, self.outf, self.tpr, self.odir, self.dryrun) for begin, end in splits]
-        xvg_files = [f for f in pool.map(mindist_slice, args) if f is not None]
-        pool.close()
-        pool.join()
-
+        
+        with mp.Pool(processes=num_cores) as pool:
+            xvg_files = [f for f in pool.starmap(mindist_slice, args) if f is not None]
+        
         # Prepare to write the merged file
         merged_file = f"{self.odir}/min_pbc_dist_merged.xvg"
         with open(merged_file, 'w') as outfile:
@@ -672,8 +672,7 @@ class gTools_plotter:
 
 ### Functions
 
-def mindist_slice(args):
-    begin, end, outf, tpr, odir, dryrun = args
+def mindist_slice(begin, end, outf, tpr, odir, dryrun):
     output_file = f"{odir}/mindist_chunk_{begin}_{end}.xvg"
 
     # Run GROMACS mindist to generate the .xvg file for this slice
