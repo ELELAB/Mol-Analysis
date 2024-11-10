@@ -437,7 +437,7 @@ class gTools_runner:
             print("Printing .pdb movie")
             excode, out, err = g_pdbout.run(**kwargs)
 
-    def runall(self, **kwargs):
+    def runall(self, num_cores=10, **kwargs):
         self.torun = {"mkndx": True, "mindist": True, "trjconv": True,
                       "editconf": True, "convert_tpr": True, "rmsd": True,
                       "rg": True, "rmsf": True, "pdbout": True}
@@ -461,7 +461,6 @@ class gTools_runner:
             self.getinfo(self.outf)
 
         if self.torun["mindist"] is True:
-            num_cores = kwargs.get("nc", args.nc)
             self.mindist(num_cores=num_cores)
 
         if self.torun["rmsd"] is True:
