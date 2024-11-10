@@ -290,13 +290,9 @@ class gTools_runner:
         with mp.Pool(processes=num_cores) as pool:
             results = [data for data in pool.starmap(mindist_slice, args) if data is not None]
         
-        # Merge all data slices
-        merged_data = []
-        for result in results:
-            merged_data.extend(result)
 
         # Convert merged data to a numpy array for easier handling
-        merged_data = np.array(merged_data)
+        merged_data = np.vstack(results)
         
         # Write the merged data back to an .xvg file to maintain compatibility with other plotting functions
         merged_file = f"{self.odir}/min_pbc_dist_merged.xvg"
@@ -697,16 +693,8 @@ def mindist_slice(begin, end, outf, tpr, odir, dryrun):
     else:
         print(f"Dry run: g_mindist would have been run for slice {begin}-{end}")
     
-    data = []
-
-    # Parse the GROMACS output (assuming it's text and similar to .xvg format)
-    with open(output_file, 'r') as infile:
-        for line in infile:
-            if line.startswith(('@', '#')):
-                continue  # Skip header lines
-            else:
-                tup = tuple(map(float, line.split()))
-                data.append(tup)
+    data = np.loadtxt(output_file, comments=('@', '#'))
+    
     return data
 
 
