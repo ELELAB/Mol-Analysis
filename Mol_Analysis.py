@@ -288,34 +288,30 @@ class gTools_runner:
         args = [(begin, end, self.outf, self.tpr, self.odir, self.dryrun) for begin, end in splits]
         
         with mp.Pool(processes=num_cores) as pool:
-            xvg_files = [f for f in pool.starmap(mindist_slice, args) if f is not None]
+            results = [data for data in pool.starmap(mindist_slice, args) if data is not None]
         
-        # Prepare to write the merged file
+        # Merge all data slices
+        merged_data = []
+        for result in results:
+            merged_data.extend(result)
+
+        # Convert merged data to a numpy array for easier handling
+        merged_data = np.array(merged_data)
+        
+        # Write the merged data back to an .xvg file to maintain compatibility with other plotting functions
         merged_file = f"{self.odir}/min_pbc_dist_merged.xvg"
-        with open(merged_file, 'w') as outfile:
-            first_file = True
-            last_time = None
+        
+        # Prepare the headers manually
+        headers = [
+            '@    title "Minimum Distance Over Time"',
+            '@    xaxis  label "Time (ps)"',
+            '@    yaxis  label "Distance (nm)"',
+            '@TYPE xy'
+        ]
 
-            for file in xvg_files:
-                with open(file, 'r') as infile:
-                    for line in infile:
-                        # Identify and write the header only for the first file
-                        if line.startswith(('@', '#')):
-                            if first_file:
-                                outfile.write(line)
-                        else:
-                            # Parse time value from the first column to check for duplicates
-                            time_val = float(line.split()[0])
-                            if last_time is None or time_val > last_time:
-                                outfile.write(line)  # Write non-duplicate lines
-                                last_time = time_val
-
-                first_file = False  # Header only in the first file
-
-        # Remove mindist file slices
-        for file in xvg_files:
-            os.remove(file)
-
+        header_str = "\n".join(headers)
+        np.savetxt(merged_file, merged_data, fmt='%.6f', delimiter=' ', header=header_str, comments='')
+        
         self._addfilename("mindist", merged_file)
         print(f"Merged file created at: {merged_file}")
 
@@ -674,7 +670,6 @@ class gTools_plotter:
 
 def mindist_slice(begin, end, outf, tpr, odir, dryrun):
     output_file = f"{odir}/mindist_chunk_{begin}_{end}.xvg"
-
     # Run GROMACS mindist to generate the .xvg file for this slice
     g_mindist = gromacs.tools.G_mindist(
         f=outf,
@@ -701,8 +696,19 @@ def mindist_slice(begin, end, outf, tpr, odir, dryrun):
             return None
     else:
         print(f"Dry run: g_mindist would have been run for slice {begin}-{end}")
+    
+    data = []
 
-    return output_file
+    # Parse the GROMACS output (assuming it's text and similar to .xvg format)
+    with open(output_file, 'r') as infile:
+        for line in infile:
+            if line.startswith(('@', '#')):
+                continue  # Skip header lines
+            else:
+                tup = tuple(map(float, line.split()))
+                data.append(tup)
+    return data
+
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
