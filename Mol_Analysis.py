@@ -274,13 +274,9 @@ class gTools_runner:
         if not hasattr(self, 'simlen') or not hasattr(self, 'trjdt'):
             self.getinfo(self.outf)  # Populate simlen and trjdt attributes
 
-        chunk_size = self.simlen // num_cores
-        remainder = self.simlen % num_cores  # Remainder to add to the last chunk
-
-        # Create slices with the remainder added to the last chunk
-        splits = [(i, i + chunk_size) for i in range(0, self.simlen - remainder, chunk_size)]
-        splits[-1] = (splits[-1][0], splits[-1][1] + remainder)  # Adjust last slice
-
+        # Calculate chunk boundaries using np.linspace
+        ends = np.linspace(0, self.simlen, num_cores + 1, dtype=int)
+        splits = [(ends[i], ends[i + 1]) for i in range(len(ends) - 1)]
         print(f"Total time slices for mindist: {len(splits)}")
 
         # Run mindist_slice in parallel to generate individual .xvg files
@@ -289,7 +285,6 @@ class gTools_runner:
         
         with mp.Pool(processes=num_cores) as pool:
             results = [data for data in pool.starmap(mindist_slice, args) if data is not None]
-        
 
         # Convert merged data to a numpy array for easier handling
         merged_data = np.vstack(results)
@@ -696,7 +691,6 @@ def mindist_slice(begin, end, outf, tpr, odir, dryrun):
     data = np.loadtxt(output_file, comments=('@', '#'))
     os.remove(output_file)
     return data
-
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
