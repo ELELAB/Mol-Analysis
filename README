@@ -9,7 +9,7 @@ In particular Mol_Analysis.py allows the following steps/analyses: i) calculatio
 More information on the options and command line here:
 
 usage: Mol_Analysis.py [-h] [-f config.cfg] [-n] [-nomindist] [-nopdb] [-v]
-                          [-nt N] [-nc N] [-local] [-nogroup] [-begin BEGIN]
+                          [-nt N] [-local] [-nogroup] [-begin BEGIN]
                           [-end END] [-large]
 
 This is a script that can assist in plotting data of MD simulations with matplotlib.
@@ -21,8 +21,7 @@ optional arguments:
   -nomindist     No gromacs mindist analysis are run
   -nopdb         No .pdb movie are output
   -v             Verbose mode
-  -nt N          Number of threads
-  -nc N		 Number of cores for mindist paralelization
+  -nt N          Number of threads/cores for paralelization
   -local         Locate plots in folder of script
   -nogroup       No groupplot
   -begin BEGIN   Begin from time X (fs)

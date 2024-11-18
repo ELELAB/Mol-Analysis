@@ -895,7 +895,7 @@ if __name__ == "__main__":
                         help="No .pdb movie are output")
     parser.add_argument("-v", action="store_true", help="Verbose mode")
     parser.add_argument("-nt", metavar="N", type=int, default=1,
-                        help="Number of threads")
+                        help="Number of threads/cores for parallel processing")
     parser.add_argument("-local", action="store_true",
                         help="Locate plots in folder of script")
     parser.add_argument("-nogroup", action="store_true", help="No groupplot")
@@ -903,7 +903,6 @@ if __name__ == "__main__":
     parser.add_argument("-end", type=int, default=None, help="End at time X (fs)")
     parser.add_argument("-large", action="store_true", help="Can plot 9 plots")
     parser.add_argument("-splitlen", metavar="slen", default=10, help="Length of timewindow for RMSF calculation (ns). If multiple than separated with comma")
-    parser.add_argument("-nc", type=int, default = 10, help="Number of cores for mindist paralelization")
     args = parser.parse_args()
     timescales = []
     try:
@@ -989,7 +988,7 @@ if __name__ == "__main__":
     def runandplot(folder, group=0):
         runner = gTools_runner(wdir=folder, splitlen=timescales, dryrun=args.n, verbose=args.v,
                                group=group, **settings)
-        runner.runall(mindist=args.nomindist, pdbout=args.nopdb, num_cores=args.nc)
+        runner.runall(mindist=args.nomindist, pdbout=args.nopdb, num_cores=args.nt)
         files_to_plot.append(runner.getfilenames())
 
     # Adding it all to the multithreader
