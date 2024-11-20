@@ -303,7 +303,7 @@ class gTools_runner:
         ]
 
         header_str = "\n".join(headers)
-        np.savetxt(merged_file, merged_data, fmt='%.6f', delimiter=' ', header=header_str, comments='')
+        np.savetxt(merged_file, merged_data, fmt= ' '.join(['%d'] + ['%.3f'] * (merged_data.shape[1] - 1)), delimiter=' ', header=header_str, comments='')
         
         self._addfilename("mindist", merged_file)
         print(f"Merged file created at: {merged_file}")
