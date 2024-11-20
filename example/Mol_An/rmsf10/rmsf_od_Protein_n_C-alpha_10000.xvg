@@ -1,0 +1,102 @@
+# This file was created Wed Nov 20 16:06:42 2024
+# Created by:
+#                        :-) GROMACS - gmx rmsf, 2024 (-:
+# 
+# Executable:   /usr/local/gromacs-2024/bin/gmx_mpi
+# Data prefix:  /usr/local/gromacs-2024
+# Working dir:  /data/user/pablosanchezb/devel/Mol-Analysis/example
+# Command line:
+#   gmx_mpi rmsf -f /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/center_traj.xtc -s /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/updated.tpr -o /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/rmsf10/rmsf_Protein_n_C-alpha_10000.xvg -od /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/rmsf10/rmsf_od_Protein_n_C-alpha_10000.xvg -b 0 -e 10000 -n /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/index.ndx -res
+# gmx rmsf is part of G R O M A C S:
+#
+# GROningen MAchine for Chemical Simulation
+#
+@    title "RMS Deviation"
+@    xaxis  label "Residue"
+@    yaxis  label "(nm)"
+@TYPE xy
+   67   0.2213
+   68   0.1601
+   69   0.2011
+   70   0.1003
+   71   0.0852
+   72   0.1006
+   73   0.2102
+   74   0.1878
+   75   0.1538
+   76   0.1052
+   77   0.1151
+   78   0.1181
+   79   0.1271
+   80   0.1391
+   81   0.1175
+   82   0.1180
+   83   0.1325
+   84   0.0963
+   85   0.1054
+   86   0.0587
+   87   0.0665
+   88   0.0780
+   89   0.0762
+   90   0.0982
+   91   0.1046
+   92   0.0484
+   93   0.0482
+   94   0.0621
+   95   0.0777
+   96   0.1091
+   97   0.0851
+   98   0.1150
+   99   0.1606
+  100   0.1607
+  101   0.1206
+  102   0.1405
+  103   0.1112
+  104   0.1207
+  105   0.1300
+  106   0.1503
+  107   0.1394
+  108   0.1114
+  109   0.1034
+  110   0.1088
+  111   0.0936
+  112   0.0726
+  113   0.0518
+  114   0.0493
+  115   0.0506
+  116   0.0708
+  117   0.0871
+  118   0.1174
+  119   0.1256
+  120   0.1239
+  121   0.0769
+  122   0.0713
+  123   0.0870
+  124   0.1133
+  125   0.0798
+  126   0.1085
+  127   0.0699
+  128   0.1264
+  129   0.1087
+  130   0.0846
+  131   0.0849
+  132   0.0808
+  133   0.0801
+  134   0.0849
+  135   0.1035
+  136   0.1780
+  137   0.1812
+  138   0.2562
+  139   0.0878
+  140   0.0625
+  141   0.0947
+  142   0.0685
+  143   0.0656
+  144   0.0821
+  145   0.0879
+  146   0.1649
+  147   0.1837
+  148   0.2215
+  149   0.3915
+  150   0.4977
+  151   0.5887

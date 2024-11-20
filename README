@@ -21,7 +21,7 @@ optional arguments:
   -nomindist     No gromacs mindist analysis are run
   -nopdb         No .pdb movie are output
   -v             Verbose mode
-  -nt N          Number of threads
+  -nt N          Number of threads/cores for paralelization
   -local         Locate plots in folder of script
   -nogroup       No groupplot
   -begin BEGIN   Begin from time X (fs)

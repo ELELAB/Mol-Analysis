@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 import gromacs
 import numpy as np
 from copy import deepcopy
+import multiprocessing as mp
 
 ### Monkey patch for mpi
 if True:
@@ -266,31 +267,46 @@ class gTools_runner:
             print("Making ndx file")
             g_mkndx.run(**kwargs)
 
-    def mindist(self, **kwargs):
-        """Runs gromacs mindist on the new, centered traj."""
-        outfile = self.odir + "min_pbc_dist.xvg"
-        self._addfilename("mindist", outfile)
-        g_mindist = gromacs.tools.G_mindist(
-                f=self.outf,
-                s=self.tpr,
-                pi=True,
-                od=outfile,
-                input="Protein",
-                stdout=False,
-                stderr=False
-                )
+    def mindist(self, num_cores=10, **kwargs):
+        """Merges output from mindist_slice, keeping header only once and removing duplicate rows."""
+        
+        # Determine chunk size based on total simulation length and split
+        if not hasattr(self, 'simlen') or not hasattr(self, 'trjdt'):
+            self.getinfo(self.outf)  # Populate simlen and trjdt attributes
 
-        if not self.dryrun:
-            print("Running mindist")
-            excode, out, err = g_mindist.run(**kwargs)
-        if not self.dryrun:
-            for line in out.split("\n"):
-                sline = line.split()
-                if len(sline) > 2:
-                    if ["The", "shortest", "periodic"] == sline[0:3]:
-                        self.minpdist = float(sline[5])
-                        self.mintime = float(sline[9])
-                        break
+        # Calculate chunk boundaries using np.linspace
+        ends = np.linspace(0, self.simlen, num_cores + 1, dtype=int)
+        splits = [(ends[i], ends[i + 1] - 1) if i < len(ends) - 2 else (ends[i], ends[i + 1])
+                for i in range(len(ends) - 1)]
+        
+        print(f"Total time slices for mindist: {len(splits)}")
+        
+        # Run mindist_slice in parallel to generate individual .xvg files
+        pool = mp.Pool(processes=num_cores)
+        args = [(begin, end, self.outf, self.tpr, self.odir, self.dryrun) for begin, end in splits]
+        
+        with mp.Pool(processes=num_cores) as pool:
+            results = [data for data in pool.starmap(mindist_slice, args) if data is not None]
+
+        # Convert merged data to a numpy array for easier handling
+        merged_data = np.vstack(results)
+        
+        # Write the merged data back to an .xvg file to maintain compatibility with other plotting functions
+        merged_file = f"{self.odir}/min_pbc_dist_merged.xvg"
+        
+        # Prepare the headers manually
+        headers = [
+            '@    title "Minimum Distance Over Time"',
+            '@    xaxis  label "Time (ps)"',
+            '@    yaxis  label "Distance (nm)"',
+            '@TYPE xy'
+        ]
+
+        header_str = "\n".join(headers)
+        np.savetxt(merged_file, merged_data, fmt= ' '.join(['%d'] + ['%.3f'] * (merged_data.shape[1] - 1)), delimiter=' ', header=header_str, comments='')
+        
+        self._addfilename("mindist", merged_file)
+        print(f"Merged file created at: {merged_file}")
 
     def editconf(self, **kwargs):
         """Generates a new conf file"""
@@ -410,7 +426,7 @@ class gTools_runner:
             print("Printing .pdb movie")
             excode, out, err = g_pdbout.run(**kwargs)
 
-    def runall(self, **kwargs):
+    def runall(self, num_cores=10, **kwargs):
         self.torun = {"mkndx": True, "mindist": True, "trjconv": True,
                       "editconf": True, "convert_tpr": True, "rmsd": True,
                       "rg": True, "rmsf": True, "pdbout": True}
@@ -434,7 +450,7 @@ class gTools_runner:
             self.getinfo(self.outf)
 
         if self.torun["mindist"] is True:
-            self.mindist()
+            self.mindist(num_cores=num_cores)
 
         if self.torun["rmsd"] is True:
             self.rmsd()
@@ -614,7 +630,7 @@ class gTools_plotter:
         if nrows==2 and nplots>6:
             sys.exit("More than 6 plot! Please use -large")
         print("Plotting %s plots" % (nplots))
-        
+
         protein_name = groupfolderlist[0][0]
 
         # Set the title with the protein name and "simulation"
@@ -645,6 +661,38 @@ class gTools_plotter:
 
 ### Functions
 
+def mindist_slice(begin, end, outf, tpr, odir, dryrun):
+    output_file = f"{odir}/mindist_chunk_{begin}_{end}.xvg"
+    # Run GROMACS mindist to generate the .xvg file for this slice
+    g_mindist = gromacs.tools.G_mindist(
+        f=outf,
+        s=tpr,
+        pi=True,
+        od=output_file,
+        b=begin,
+        e=end,
+        input="Protein",
+        stdout=False,
+        stderr=False
+    )
+
+    if not dryrun:
+        try:
+            excode, out, err = g_mindist.run()
+            if excode != 0:
+                print(f"g_mindist failed for slice {begin}-{end}: excode={excode}, err={err}")
+                return None
+            else:
+                print(f"g_mindist completed for slice {begin}-{end}: excode={excode}")
+        except Exception as e:
+            print(f"Exception occurred while running g_mindist for slice {begin}-{end}: {e}")
+            return None
+    else:
+        print(f"Dry run: g_mindist would have been run for slice {begin}-{end}")
+    
+    data = np.loadtxt(output_file, comments=('@', '#'))
+    os.remove(output_file)
+    return data
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
@@ -849,7 +897,7 @@ if __name__ == "__main__":
                         help="No .pdb movie are output")
     parser.add_argument("-v", action="store_true", help="Verbose mode")
     parser.add_argument("-nt", metavar="N", type=int, default=1,
-                        help="Number of threads")
+                        help="Number of threads/cores for parallel processing")
     parser.add_argument("-local", action="store_true",
                         help="Locate plots in folder of script")
     parser.add_argument("-nogroup", action="store_true", help="No groupplot")
@@ -942,7 +990,7 @@ if __name__ == "__main__":
     def runandplot(folder, group=0):
         runner = gTools_runner(wdir=folder, splitlen=timescales, dryrun=args.n, verbose=args.v,
                                group=group, **settings)
-        runner.runall(mindist=args.nomindist, pdbout=args.nopdb)
+        runner.runall(mindist=args.nomindist, pdbout=args.nopdb, num_cores=args.nt)
         files_to_plot.append(runner.getfilenames())
 
     # Adding it all to the multithreader
