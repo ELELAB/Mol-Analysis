@@ -1,4 +1,4 @@
-# This file was created Tue Nov 19 15:36:15 2024
+# This file was created Wed Nov 20 13:47:48 2024
 # Created by:
 #                        :-) GROMACS - gmx rms, 2024 (-:
 # 
@@ -9,7 +9,7 @@
 #   gmx_mpi rms -f /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/center_traj.xtc -s /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/updated.tpr -o /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/rmsd_Protein.xvg -n /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/index.ndx
 # gmx rms is part of G R O M A C S:
 #
-# GROtesk MACabre and Sinister
+# Green Red Orange Magenta Azure Cyan Skyblue
 #
 @    title "RMSD"
 @    xaxis  label "Time (ps)"

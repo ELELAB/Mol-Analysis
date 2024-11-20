@@ -275,10 +275,13 @@ class gTools_runner:
             self.getinfo(self.outf)  # Populate simlen and trjdt attributes
 
         # Calculate chunk boundaries using np.linspace
-        ends = np.linspace(0, self.simlen, num_cores + 1, dtype=int)
+        ends = np.linspace(0, self.simlen, num_cores + 1, endpoint = False, dtype=int)
         splits = [(ends[i], ends[i + 1]) for i in range(len(ends) - 1)]
-        print(f"Total time slices for mindist: {len(splits)}")
+        if splits[-1][1] != self.simlen:
+            splits[-1] = (splits[-1][0], self.simlen)
 
+        print(f"Total time slices for mindist: {len(splits)}")
+        
         # Run mindist_slice in parallel to generate individual .xvg files
         pool = mp.Pool(processes=num_cores)
         args = [(begin, end, self.outf, self.tpr, self.odir, self.dryrun) for begin, end in splits]

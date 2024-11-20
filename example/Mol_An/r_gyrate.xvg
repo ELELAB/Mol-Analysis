@@ -1,4 +1,4 @@
-# This file was created Tue Nov 19 15:36:16 2024
+# This file was created Wed Nov 20 13:47:48 2024
 # Created by:
 #                       :-) GROMACS - gmx gyrate, 2024 (-:
 # 
@@ -9,7 +9,7 @@
 #   gmx_mpi gyrate -f /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/center_traj.xtc -s /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/updated.tpr -o /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/r_gyrate.xvg
 # gmx gyrate is part of G R O M A C S:
 #
-# Gnomes, ROck Monsters And Chili Sauce
+# Green Red Orange Magenta Azure Cyan Skyblue
 #
 @    title "Radius of gyration (total and around axes)"
 @    xaxis  label "Time (ps)"

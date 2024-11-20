@@ -1,4 +1,4 @@
-# This file was created Tue Nov 19 15:36:19 2024
+# This file was created Wed Nov 20 13:47:51 2024
 # Created by:
 #                        :-) GROMACS - gmx rmsf, 2024 (-:
 # 
@@ -9,7 +9,7 @@
 #   gmx_mpi rmsf -f /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/center_traj.xtc -s /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/updated.tpr -o /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/rmsf10/rmsf_Protein_n_C-alpha_20000.xvg -od /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/rmsf10/rmsf_od_Protein_n_C-alpha_20000.xvg -b 10020 -e 20000 -n /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/index.ndx -res
 # gmx rmsf is part of G R O M A C S:
 #
-# Giant Rising Ordinary Mutants for A Clerical Setup
+# Good gRace! Old Maple Actually Chews Slate
 #
 @    title "RMS Deviation"
 @    xaxis  label "Residue"
