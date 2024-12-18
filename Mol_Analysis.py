@@ -368,9 +368,9 @@ class gTools_runner:
                 print("Calculating RMSD")
                 excode, out, err = g_rmsd.run()
 
-    def rmsd_matrix(self, mainchain_group=5, rmsd_group=1, **kwargs):
+    def rmsd_matrix(self, mainchain_group="Mainchain", rmsd_group="Mainchain", **kwargs):
         """
-        Runs gmx rms and extracts the average RMSD.
+        Runs gmx rms and extracts the average RMSD (mainchain-mainchain).
         """
         if self.dryrun:
             return
