@@ -1,4 +1,4 @@
-# This file was created Fri Dec 13 14:28:06 2024
+# This file was created Wed Dec 18 15:47:05 2024
 # Created by:
 #                        :-) GROMACS - gmx rms, 2024 (-:
 # 
@@ -9,7 +9,7 @@
 #   gmx_mpi rms -f /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/center_traj.xtc -s /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/updated.tpr -o /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/rmsd_Protein.xvg -n /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/index.ndx
 # gmx rms is part of G R O M A C S:
 #
-# Great Red Owns Many ACres of Sand 
+# Good ROcking Metal Altar for Chronical Sinners
 #
 @    title "RMSD"
 @    xaxis  label "Time (ps)"

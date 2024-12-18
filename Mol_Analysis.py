@@ -372,6 +372,9 @@ class gTools_runner:
         """
         Runs gmx rms and extracts the average RMSD.
         """
+        if self.dryrun:
+            return
+
         rmsd_xvg = self.odir + "rmsd.xvg"
         rmsd_file = self.odir + "rmsd_matrix.xpm" 
 
@@ -383,34 +386,35 @@ class gTools_runner:
             input=(str(mainchain_group), str(rmsd_group))
         )
 
-        if not self.dryrun:
-            print("Calculating RMSD matrix and extracting average RMSD...")
-            excode, out, err = g_rms.run()
-            if excode != 0:
-                print("gmx rms failed for RMSD matrix calculation.")
-                return None
+        print("Calculating RMSD matrix and extracting average RMSD...")
+        excode, out, err = g_rms.run()
+        if excode != 0:
+            print("gmx rms failed for RMSD matrix calculation.")
+            return None
 
-            avg_rmsd = None
-            lines = out.split('\n') + err.split('\n')
-            for line in lines:
-                if "RMSD:" in line and "Avg" in line:
-                    parts = line.strip().split(',')
-                    for p in parts:
-                        p = p.strip()
-                        if p.startswith("Avg"):
-                            avg_str = p.split()[1]
-                            avg_rmsd = float(avg_str)
-                            break
-            if avg_rmsd is not None:
+        avg_rmsd = None
+        compiled_re = re.compile(r"^RMSD: Min .*, Max .*, Avg (.*)")
+        lines = out.split('\n') + err.split('\n')
+
+        for line in lines:
+            match = compiled_re.match(line)
+            if match:
+                avg_rmsd = match.groups()[0]
+                try:
+                    avg_rmsd = float(avg_rmsd)
+                except ValueError:
+                    print("Error: Extracted Avg RMSD is not a valid float.")
+                    return None
+
                 print(f"Average RMSD: {avg_rmsd:.6f} nm")
 
                 stats_file = os.path.join(self.odir, "rmsd_matrix_avg.txt")
                 np.savetxt(stats_file, [avg_rmsd], header="RMSD Matrix Average (nm)", comments="", fmt="%.6f")
 
                 return avg_rmsd
-            else:
-                print("Could not find Avg RMSD in the output.")
-                return None
+
+        print("Could not find Avg RMSD in the output.")
+        return None
     
     def rg(self, **kwargs):
         """Calcs the rg for the complete protein"""
