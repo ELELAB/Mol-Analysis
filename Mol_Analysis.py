@@ -368,6 +368,54 @@ class gTools_runner:
                 print("Calculating RMSD")
                 excode, out, err = g_rmsd.run()
 
+    def rmsd_matrix(self, mainchain_group="Mainchain", rmsd_group="Mainchain", **kwargs):
+        """
+        Runs gmx rms and extracts the average RMSD (mainchain-mainchain).
+        """
+        if self.dryrun:
+            return
+
+        rmsd_xvg = self.odir + "rmsd.xvg"
+        rmsd_file = self.odir + "rmsd_matrix.xpm" 
+
+        g_rms = gromacs.tools.G_rms(
+            f=self.outf,
+            s=self.outp,
+            o=rmsd_xvg,
+            m=rmsd_file,
+            input=(str(mainchain_group), str(rmsd_group))
+        )
+
+        print("Calculating RMSD matrix and extracting average RMSD...")
+        excode, out, err = g_rms.run()
+        if excode != 0:
+            print("gmx rms failed for RMSD matrix calculation.")
+            return None
+
+        avg_rmsd = None
+        compiled_re = re.compile(r"^RMSD: Min .*, Max .*, Avg (.*)")
+        lines = out.split('\n') + err.split('\n')
+
+        for line in lines:
+            match = compiled_re.match(line)
+            if match:
+                avg_rmsd = match.groups()[0]
+                try:
+                    avg_rmsd = float(avg_rmsd)
+                except ValueError:
+                    print("Error: Extracted Avg RMSD is not a valid float.")
+                    return None
+
+                print(f"Average RMSD: {avg_rmsd:.6f} nm")
+
+                stats_file = os.path.join(self.odir, "rmsd_matrix_avg.txt")
+                np.savetxt(stats_file, [avg_rmsd], header="RMSD Matrix Average (nm)", comments="", fmt="%.6f")
+
+                return avg_rmsd
+
+        print("Could not find Avg RMSD in the output.")
+        return None
+    
     def rg(self, **kwargs):
         """Calcs the rg for the complete protein"""
         outfile = self.odir + "r_gyrate.xvg"
@@ -461,6 +509,9 @@ class gTools_runner:
         if self.torun["rmsf"] is True:
             for i in self.splitlen:
                 self.rmsf(i)
+        
+        if self.torun.get("rmsd_matrix", True):
+            self.rmsd_matrix()
 
         if self.torun["pdbout"] is True:
             self.pdbout(skip=100)
