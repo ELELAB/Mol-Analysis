@@ -383,6 +383,7 @@ class gTools_runner:
             s=self.outp,
             o=rmsd_xvg,
             m=rmsd_file,
+            dt=200,
             input=(str(mainchain_group), str(rmsd_group))
         )
 

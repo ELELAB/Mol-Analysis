@@ -1,2 +1,2 @@
 RMSD Matrix Average (nm)
-0.211963
+0.212406
