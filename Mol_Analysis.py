@@ -270,6 +270,16 @@ class gTools_runner:
     def mindist(self, num_cores=10, **kwargs):
         """Merges output from mindist_slice, keeping header only once and removing duplicate rows."""
         
+        merged_file = f"{self.odir}/min_pbc_dist_merged.xvg"
+
+        if self.dryrun:
+            if os.path.isfile(merged_file):
+                self._addfilename("mindist", merged_file)
+                print(f"Reusing existing mindist file: {merged_file}")
+            else:
+                print(f"Dry run: existing mindist file not found: {merged_file}")
+            return
+        
         # Determine chunk size based on total simulation length and split
         if not hasattr(self, 'simlen') or not hasattr(self, 'trjdt'):
             self.getinfo(self.outf)  # Populate simlen and trjdt attributes
