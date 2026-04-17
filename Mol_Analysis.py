@@ -301,9 +301,6 @@ class gTools_runner:
         # Convert merged data to a numpy array for easier handling
         merged_data = np.vstack(results)
         
-        # Write the merged data back to an .xvg file to maintain compatibility with other plotting functions
-        merged_file = f"{self.odir}/min_pbc_dist_merged.xvg"
-        
         # Prepare the headers manually
         headers = [
             '@    title "Minimum Distance Over Time"',
