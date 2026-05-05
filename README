@@ -27,6 +27,7 @@ optional arguments:
   -begin BEGIN   Begin from time X (fs)
   -end END       End at time X (fs)
   -large         Can plot 9 plots
+  -nomkndx	 Use custom index for multiple chains
   -splitlen      slen Lenght of timewindow for RMSF calculation (in ns, default=10 ns)
 		 if multiple times need to be calculated then separate with a comma
 
