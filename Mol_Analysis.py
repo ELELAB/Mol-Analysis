@@ -964,6 +964,8 @@ if __name__ == "__main__":
     parser.add_argument("-end", type=int, default=None, help="End at time X (fs)")
     parser.add_argument("-large", action="store_true", help="Can plot 9 plots")
     parser.add_argument("-splitlen", metavar="slen", default=10, help="Length of timewindow for RMSF calculation (ns). If multiple than separated with comma")
+    parser.add_argument("-nomkndx", action="store_false",
+                    help="Do not recreate index file; reuse existing ndxfile")
     args = parser.parse_args()
     timescales = []
     try:
@@ -987,7 +989,7 @@ if __name__ == "__main__":
     config.listread(args.f)
     groupfolderlist = config.getlist()
     # Storing defaults here:
-    settings = {"odir": "Mol_An", "f": None, "tpr": None,
+    settings = {"odir": "Mol_An", "f": None, "tpr": None, 
                 "outf": "center_traj.xtc", "outs": "updated.gro",
                 "outp": "updated.tpr", "ndxfile": "index.ndx",
                 "ndxparams": None, "chains": ["Protein"], "center": "Protein",
@@ -998,7 +1000,7 @@ if __name__ == "__main__":
         try:
             option = config.get("Settings", key)
             if "," in option:
-                option = map(lambda s: s.strip(), option.split(","))
+                option = list(map(lambda s: s.strip(), option.split(",")))
             elif "none" in option.lower():
                 option = None
                 continue
@@ -1049,7 +1051,7 @@ if __name__ == "__main__":
     def runandplot(folder, group=0):
         runner = gTools_runner(wdir=folder, splitlen=timescales, dryrun=args.n, verbose=args.v,
                                group=group, **settings)
-        runner.runall(mindist=args.nomindist, pdbout=args.nopdb, num_cores=args.nt)
+        runner.runall(mkndx=args.nomkndx, mindist=args.nomindist, pdbout=args.nopdb, num_cores=args.nt)
         files_to_plot.append(runner.getfilenames())
 
     # Adding it all to the multithreader
@@ -1080,8 +1082,10 @@ if __name__ == "__main__":
                     groupedfnames = []
                     shift = 0
                     # Align chains here:
-                    #if ("p62" in label_g) and (chain == "chB"):
-                    #    shift = 709
+                    #if chain == "chA":
+                    #    shift = 124
+                    #elif chain == "chB":
+                    #    shift = 7
                     for model in model_g:
                         try:
                             groupedfnames.extend(model["rmsf"+str(i)+"_"+chain+"_n_C-alpha"])

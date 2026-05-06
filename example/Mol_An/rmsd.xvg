@@ -1,4 +1,4 @@
-# This file was created Mon May 26 12:01:52 2025
+# This file was created Tue May  5 11:22:08 2026
 # Created by:
 #                        :-) GROMACS - gmx rms, 2024 (-:
 # 
@@ -9,7 +9,7 @@
 #   gmx_mpi rms -f /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/center_traj.xtc -s /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/updated.tpr -o /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/rmsd.xvg -m /data/user/pablosanchezb/devel/Mol-Analysis/example/Mol_An/rmsd_matrix.xpm -dt 200
 # gmx rms is part of G R O M A C S:
 #
-# GROup of MAchos and Cynical Suckers
+# GROwing Monsters And Cloning Shrimps
 #
 @    title "RMSD"
 @    xaxis  label "Time (ps)"
